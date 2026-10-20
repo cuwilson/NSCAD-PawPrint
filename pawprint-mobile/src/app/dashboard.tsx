@@ -7,6 +7,11 @@ import PawPrintBanner from "@/components/PawPrintBanner";
 import DashboardSection from "@/components/dashboard/DashboardSection";
 import AddEditPanel from "@/components/overlays/AddEditPanel";
 import ReminderForm from "@/components/forms/ReminderForm";
+import {
+  completeReminder as completeReminderService,
+  deleteReminder as deleteReminderService,
+  getUpcomingReminders,
+} from "@/services/reminderService";
 
 type DashboardItem = {
   id: number;
@@ -80,11 +85,7 @@ export default function DashboardScreen() {
       })) ?? []
     );
 
-    const { data: reminderData } = await supabase
-      .from("upcoming_reminders")
-      .select("reminder_id, pet_name, reminder_title, due_date")
-      .eq("owner_id", ownerIdNumber)
-      .order("due_date");
+    const reminderData = await getUpcomingReminders(ownerIdNumber);
 
     setReminders(
       reminderData?.map((item) => ({
@@ -109,35 +110,39 @@ export default function DashboardScreen() {
     loadDashboardData();
   }, [ownerIdNumber]);
 
+
   async function completeReminder(reminderId: number) {
-    const { error } = await supabase
-      .from("reminders")
-      .update({ is_completed: true })
-      .eq("reminder_id", reminderId);
+    try {
+      await completeReminderService(reminderId);
 
-    if (error) {
-      setMessage(error.message);
-      return;
+      setActivePanel(null);
+      loadDashboardData();
+    } catch (error) {
+      setMessage(
+        error instanceof Error
+          ? error.message
+          : "Unable to complete reminder."
+      );
     }
-
-    setActivePanel(null);
-    loadDashboardData();
   }
+
+
 
   async function deleteReminder(reminderId: number) {
-    const { error } = await supabase
-      .from("reminders")
-      .delete()
-      .eq("reminder_id", reminderId);
+    try {
+      await deleteReminderService(reminderId);
 
-    if (error) {
-      setMessage(error.message);
-      return;
+      setActivePanel(null);
+      loadDashboardData();
+    } catch (error) {
+      setMessage(
+        error instanceof Error
+          ? error.message
+          : "Unable to delete reminder."
+      );
     }
-
-    setActivePanel(null);
-    loadDashboardData();
   }
+
 
   function renderDashboardItem(
     item: DashboardItem,
@@ -352,7 +357,7 @@ export default function DashboardScreen() {
         <Text>Pet form will go here.</Text>
       </AddEditPanel>
 
-      
+
     </View>
   );
 }
@@ -474,7 +479,7 @@ const styles = StyleSheet.create({
     marginBottom: 24,
     justifyContent: "center",
   },
-  
+
   addPetTile: {
     borderColor: colors.accent,
     backgroundColor: colors.bannerBackground,
@@ -488,7 +493,7 @@ const styles = StyleSheet.create({
     color: colors.brand,
     marginBottom: 8,
   },
-  
+
   addPetName: {
     fontSize: 18,
     fontWeight: "800",

@@ -5,6 +5,7 @@ import FormField from "@/components/small-elements/FormField";
 import FormDropdown from "@/components/small-elements/FormDropdown";
 import { colors } from "@/styles/colors";
 import { scale } from "@/styles/sizes";
+import { createReminder } from "@/services/reminderService";
 
 type ReminderFormProps = {
     ownerId: number;
@@ -59,27 +60,31 @@ export default function ReminderForm({ ownerId, onSuccess }: ReminderFormProps) 
         }
     }, [ownerId]);
 
+
     async function saveReminder() {
-        if (!petId || !reminderTypeId || !title) {
+        if (!petId || !reminderTypeId || !title.trim()) {
             setMessage("Please fill out all fields.");
             return;
         }
 
-        const { error } = await supabase.from("reminders").insert({
-            pet_id: Number(petId),
-            reminder_title: title,
-            reminder_type_id: Number(reminderTypeId),
-            due_date: dueDate || null,
-            is_completed: false,
-        });
+        try {
+            await createReminder({
+                petId: Number(petId),
+                reminderTypeId: Number(reminderTypeId),
+                title: title.trim(),
+                dueDate: dueDate || null,
+            });
 
-        if (error) {
-            setMessage(error.message);
-            return;
+            onSuccess();
+        } catch (error) {
+            setMessage(
+                error instanceof Error
+                    ? error.message
+                    : "Unable to create reminder."
+            );
         }
-
-        onSuccess();
     }
+
 
     return (
         <>
