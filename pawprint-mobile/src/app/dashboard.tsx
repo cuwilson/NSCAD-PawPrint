@@ -12,6 +12,8 @@ import {
   deleteReminder as deleteReminderService,
   getUpcomingReminders,
 } from "@/services/reminderService";
+import { getUpcomingAppointments } from "@/services/appointmentService";
+import { getOwnerPets } from "@/services/petService";
 
 type DashboardItem = {
   id: number;
@@ -38,6 +40,7 @@ export default function DashboardScreen() {
   const ownerIdNumber = ownerIdValue ? Number(ownerIdValue) : null;
 
   const [message, setMessage] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
 
   const [appointments, setAppointments] = useState<DashboardItem[]>([]);
@@ -55,56 +58,71 @@ export default function DashboardScreen() {
     | null
   >(null);
 
+
   async function loadDashboardData() {
     if (!ownerIdNumber) return;
 
-    const { error } = await supabase
-      .from("owner_dashboard_stats")
-      .select("*")
-      .eq("owner_id", ownerIdNumber)
-      .single();
+    setMessage("");
+    setIsLoading(true);
 
-    if (error) {
-      setMessage(error.message);
-      return;
+    try {
+      // Check dashboard statistics
+      const { error } = await supabase
+        .from("owner_dashboard_stats")
+        .select("*")
+        .eq("owner_id", ownerIdNumber)
+        .single();
+
+      if (error) {
+        throw error;
+      }
+
+      // Load appointments
+      const appointmentData =
+        await getUpcomingAppointments(ownerIdNumber);
+
+      setAppointments(
+        appointmentData.map((item) => ({
+          id: item.appointment_id,
+          petName: item.pet_name,
+          title: item.appointment_title,
+          date: item.appointment_date,
+          label: `${item.pet_name}: ${item.appointment_title}`,
+        }))
+      );
+
+      // Load reminders
+      const reminderData =
+        await getUpcomingReminders(ownerIdNumber);
+
+      setReminders(
+        reminderData.map((item) => ({
+          id: item.reminder_id,
+          petName: item.pet_name,
+          title: item.reminder_title,
+          date: item.due_date,
+          label: `${item.pet_name}: ${item.reminder_title}`,
+        }))
+      );
+
+      // Load pets
+      const petData = await getOwnerPets(ownerIdNumber);
+
+      setPets(petData);
+
+
+    } catch (error) {
+      console.error("Dashboard loading error:", error);
+
+      setMessage(
+        "Unable to load dashboard information. Please try again."
+      );
+    } finally {
+      setIsLoading(false);
     }
-
-    const { data: appointmentData } = await supabase
-      .from("upcoming_appointments")
-      .select("appointment_id, pet_name, appointment_title, appointment_date")
-      .eq("owner_id", ownerIdNumber)
-      .order("appointment_date");
-
-    setAppointments(
-      appointmentData?.map((item) => ({
-        id: item.appointment_id,
-        petName: item.pet_name,
-        title: item.appointment_title,
-        date: item.appointment_date,
-        label: `${item.pet_name}: ${item.appointment_title}`,
-      })) ?? []
-    );
-
-    const reminderData = await getUpcomingReminders(ownerIdNumber);
-
-    setReminders(
-      reminderData?.map((item) => ({
-        id: item.reminder_id,
-        petName: item.pet_name,
-        title: item.reminder_title,
-        date: item.due_date,
-        label: `${item.pet_name}: ${item.reminder_title}`,
-      })) ?? []
-    );
-
-    const { data: petData } = await supabase
-      .from("pets")
-      .select("pet_id, name, species, breed, photo_url")
-      .eq("owner_id", ownerIdNumber)
-      .order("name");
-
-    setPets(petData ?? []);
   }
+
+
 
   useEffect(() => {
     loadDashboardData();
@@ -196,7 +214,25 @@ export default function DashboardScreen() {
         <Text style={styles.title}>Welcome, {firstNameValue}</Text>
         <Text style={styles.subtitle}>PawPrint Dashboard</Text>
 
+        {isLoading && (
+          <Text style={styles.message}>
+            Loading dashboard...
+          </Text>
+        )}
+
+
         {message ? <Text style={styles.message}>{message}</Text> : null}
+
+
+        {Boolean(message) && !isLoading && (
+          <Pressable
+            style={styles.completeButton}
+            onPress={loadDashboardData}
+          >
+            <Text style={styles.smallButtonText}>Retry</Text>
+          </Pressable>
+        )}
+
 
         <DashboardSection
           title="Upcoming Events"
@@ -527,6 +563,8 @@ const styles = StyleSheet.create({
 
   petTile: {
     flexDirection: "row",
+    width: 320,
+    maxWidth: "100%",
     backgroundColor: colors.background,
     borderWidth: 4,
     borderColor: colors.brand,
