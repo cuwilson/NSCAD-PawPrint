@@ -7,12 +7,16 @@ import PawPrintBanner from "@/components/PawPrintBanner";
 import DashboardSection from "@/components/dashboard/DashboardSection";
 import AddEditPanel from "@/components/overlays/AddEditPanel";
 import ReminderForm from "@/components/forms/ReminderForm";
+import AppointmentForm from "@/components/forms/AppointmentForm";
 import {
   completeReminder as completeReminderService,
   deleteReminder as deleteReminderService,
   getUpcomingReminders,
 } from "@/services/reminderService";
-import { getUpcomingAppointments } from "@/services/appointmentService";
+import {
+  getUpcomingAppointments,
+  getAppointmentDetails,
+} from "@/services/appointmentService";
 import { getOwnerPets } from "@/services/petService";
 
 type DashboardItem = {
@@ -46,6 +50,9 @@ export default function DashboardScreen() {
   const [appointments, setAppointments] = useState<DashboardItem[]>([]);
   const [reminders, setReminders] = useState<DashboardItem[]>([]);
   const [selectedItem, setSelectedItem] = useState<DashboardItem | null>(null);
+  const [appointmentDetails, setAppointmentDetails] = useState<
+    Awaited<ReturnType<typeof getAppointmentDetails>> | null
+  >(null);
 
   const [pets, setPets] = useState<Pet[]>([]);
 
@@ -86,7 +93,7 @@ export default function DashboardScreen() {
           id: item.appointment_id,
           petName: item.pet_name,
           title: item.appointment_title,
-          date: item.appointment_date,
+          date: item.appointment_date?.replace("T", " ").slice(0, 16),
           label: `${item.pet_name}: ${item.appointment_title}`,
         }))
       );
@@ -162,6 +169,21 @@ export default function DashboardScreen() {
   }
 
 
+  async function openAppointmentDetails(item: DashboardItem) {
+    setSelectedItem(item);
+    setAppointmentDetails(null);
+    setActivePanel("appointmentDetails");
+
+    try {
+      const details = await getAppointmentDetails(item.id);
+      setAppointmentDetails(details);
+    } catch (error) {
+      console.error("Unable to retrieve appointment:", error);
+      setMessage("Unable to load appointment details.");
+      setActivePanel(null);
+    }
+  }
+
   function renderDashboardItem(
     item: DashboardItem,
     panelType: "appointmentDetails" | "reminderDetails"
@@ -172,10 +194,16 @@ export default function DashboardScreen() {
       <Pressable
         key={item.id}
         style={styles.dashboardBulletRow}
+
         onPress={() => {
-          setSelectedItem(item);
-          setActivePanel(panelType);
+          if (panelType === "appointmentDetails") {
+            openAppointmentDetails(item);
+          } else {
+            setSelectedItem(item);
+            setActivePanel(panelType);
+          }
         }}
+
       >
         <Text style={styles.bullet}>•</Text>
 
@@ -323,6 +351,7 @@ export default function DashboardScreen() {
         </View>
       </ScrollView>
 
+
       <AddEditPanel
         visible={activePanel === "reminderDetails"}
         title="Reminder Details"
@@ -330,44 +359,120 @@ export default function DashboardScreen() {
       >
         {selectedItem ? (
           <>
-            <Text style={styles.cardText}>{selectedItem.petName}</Text>
-            <Text style={styles.cardText}>{selectedItem.title}</Text>
+            <Text style={styles.appointmentTitle}>
+              {selectedItem.title}
+            </Text>
 
-            {selectedItem.date ? (
-              <Text style={styles.cardText}>Due: {selectedItem.date}</Text>
-            ) : null}
+            <Text style={styles.appointmentPet}>
+              🐾 {selectedItem.petName}
+            </Text>
 
-            <Pressable
-              style={styles.editButton}
-              onPress={() => setActivePanel("reminder")}
-            >
-              <Text style={styles.smallButtonText}>Edit</Text>
-            </Pressable>
+            <View style={styles.appointmentDateBox}>
+              <Text style={styles.appointmentDateText}>
+                📅 Due: {selectedItem.date || "No due date"}
+              </Text>
+            </View>
 
-            <Pressable
-              style={styles.completeDetailsButton}
-              onPress={() => completeReminder(selectedItem.id)}
-            >
-              <Text style={styles.smallButtonText}>Complete</Text>
-            </Pressable>
+            <View style={styles.reminderActions}>
+              <Pressable
+                style={styles.editButton}
+                onPress={() => setActivePanel("reminder")}
+              >
+                <Text style={styles.smallButtonText}>Edit</Text>
+              </Pressable>
 
-            <Pressable
-              style={styles.deleteButton}
-              onPress={() => deleteReminder(selectedItem.id)}
-            >
-              <Text style={styles.deleteButtonText}>Delete</Text>
-            </Pressable>
+              <Pressable
+                style={styles.completeDetailsButton}
+                onPress={() => completeReminder(selectedItem.id)}
+              >
+                <Text style={styles.smallButtonText}>Complete</Text>
+              </Pressable>
+
+              <Pressable
+                style={styles.deleteButton}
+                onPress={() => deleteReminder(selectedItem.id)}
+              >
+                <Text style={styles.deleteButtonText}>Delete</Text>
+              </Pressable>
+            </View>
           </>
         ) : null}
       </AddEditPanel>
+
+
+
+
+
+      <AddEditPanel
+        visible={activePanel === "appointmentDetails"}
+        title="Appointment Details"
+        onClose={() => setActivePanel(null)}
+      >
+        {!appointmentDetails ? (
+          <Text style={styles.cardText}>
+            Loading appointment details...
+          </Text>
+        ) : (
+          <>
+            <Text style={styles.appointmentTitle}>
+              {appointmentDetails.appointment_title}
+            </Text>
+
+            <Text style={styles.appointmentPet}>
+              🐾 {selectedItem?.petName}
+            </Text>
+
+            <View style={styles.appointmentDateBox}>
+              <Text style={styles.appointmentDateText}>
+                📅 {appointmentDetails.appointment_date
+                  .slice(0, 10)}
+              </Text>
+              <Text style={styles.appointmentDateText}>
+                🕒 {appointmentDetails.appointment_date
+                  .slice(11, 16)}
+              </Text>
+            </View>
+
+            <Text style={styles.appointmentLabel}>PROVIDER</Text>
+            <Text style={styles.appointmentValue}>
+              {appointmentDetails.provider_name || "Not specified"}
+            </Text>
+
+            <Text style={styles.appointmentLabel}>LOCATION</Text>
+            <Text style={styles.appointmentValue}>
+              {appointmentDetails.location || "Not specified"}
+            </Text>
+
+            <Text style={styles.appointmentLabel}>NOTES</Text>
+            <Text style={styles.appointmentValue}>
+              {appointmentDetails.notes || "None"}
+            </Text>
+
+            <Text style={styles.appointmentStatus}>
+              Status: {appointmentDetails.status}
+            </Text>
+          </>
+        )}
+      </AddEditPanel>
+
+
 
       <AddEditPanel
         visible={activePanel === "appointment"}
         title="Add Appointment"
         onClose={() => setActivePanel(null)}
       >
-        <Text>Appointment form will go here.</Text>
+        {ownerIdNumber ? (
+          <AppointmentForm
+            ownerId={ownerIdNumber}
+            onSuccess={() => {
+              setActivePanel(null);
+              loadDashboardData();
+            }}
+          />
+        ) : null}
       </AddEditPanel>
+
 
       <AddEditPanel
         visible={activePanel === "reminder"}
@@ -573,4 +678,60 @@ const styles = StyleSheet.create({
     marginBottom: 16,
     minHeight: 180,
   },
+
+
+  appointmentTitle: {
+    fontSize: 24,
+    fontWeight: "800",
+    color: colors.brand,
+  },
+
+  appointmentPet: {
+    fontSize: 16,
+    color: colors.accentContrast,
+    marginBottom: 8,
+  },
+
+  appointmentDateBox: {
+    backgroundColor: colors.tileBackground,
+    borderRadius: 12,
+    padding: 14,
+    gap: 8,
+    marginBottom: 8,
+  },
+
+  appointmentDateText: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: colors.brand,
+  },
+
+  appointmentLabel: {
+    fontSize: 12,
+    fontWeight: "700",
+    color: colors.brand,
+    marginTop: 8,
+  },
+
+  appointmentValue: {
+    fontSize: 16,
+    color: colors.accentContrast,
+  },
+
+  appointmentStatus: {
+    fontSize: 14,
+    fontWeight: "700",
+    color: colors.brand,
+    marginTop: 12,
+  },
+
+
+  reminderActions: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 10,
+    marginTop: 16,
+    justifyContent: "space-between",
+  },
+
 });
