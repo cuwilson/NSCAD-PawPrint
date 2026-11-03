@@ -1,138 +1,151 @@
-# AD350-PawPrint
-**Copper Wilson** 
+# PawPrint
+**Copper Wilson**
 
-*AD350 - Database Technology*
+PawPrint is a pet care management application built with React Native, Expo, TypeScript, and Supabase.
 
-### Overview
-This project is divided into two parts - first is the database schema and backend for the PawPrint app designed in AD351, the second is a React Native / Expo application connected to the PawPrint PostgreSQL database hosted in Supabase
+The project originally began in AD351 App Design & Prototyping, where the focus was UI/UX design. It was expanded in AD350 Database Technology with a PostgreSQL database and Supabase integration. In AD371, the focus has shifted toward improving application architecture, separating database operations into services, deployment, and security.
 
-Currently, this application serves as the front-end for the PawPrint database project. Users can create owner accounts, log in using their email address, and access a personalized dashboard.
+## Project Overview
 
-#### The Goal
-PawPrint helps pet owners manage their pets care in one place. Users can add pets, view services, schedule appointments, and track basic pet care records. 
+PawPrint helps pet owners organize information about their animals in one place.
 
-    
-## Expo App
-### Current Features
-**User Accounts**
-- Create a new owner account with password validation requring a minimum of 8 characters and at least one number
-- Log in using an existing email address (Passwords are currently stored for demo purposes only)
-- Owner-specific dashboard using Supabase data
+The application includes owner accounts, pet profiles, appointments, reminders, and basic pet care records.
 
-**Dashboard**
-- Personalized welcome banner
-- View upcoming appointments and reminders
-- add/complete/delete reminders
-- open reminder details
-- automatic dashboard refresh after updates
+This is an ongoing academic project that uses fictional demonstration data.
 
-**Animal Management**
-- display owner-specific tiles on the dashboard
-- view all animals page with dedicated pet gallery
-- add pet tile prepared for future pet creation workflow
+## Current Features
 
-**Navigation**
-- global PawPrint banner component
-- clickable PawPrint logo returns the user to their dashboard
-- menu button opens and closes a dropdown navigation menu
-- "Log Off" option returns user to the login screen
+### User Accounts
+- Login through Supabase Authentication.
+- Owner-specific dashboard.
+- Owner profiles linked to Supabase Auth accounts.
+- Sample User account for development and testing.
 
-### Technologies Used
+### Dashboard
+- Personalized welcome banner.
+- Display of the owner's pets.
+- Upcoming appointments and reminders.
+- Interactive appointment and reminder details panels.
+- Loading and error feedback when retrieving dashboard information.
+
+### Appointment Management
+- Create appointments for individual pets.
+- Save appointment information to Supabase.
+- View appointment dates, times, providers, locations, notes, and status.
+
+### Reminder Management
+- Create reminders for individual pets.
+- View reminder details.
+- Mark reminders as complete.
+- Delete reminders.
+
+### Pet Management
+- View pets associated with an owner.
+- Display pet information on the dashboard.
+- Pet-specific dashboard implementation.
+
+Some pet management functionality is still under development.
+
+## Architecture
+
+PawPrint uses a React Native / Expo frontend connected to a PostgreSQL database hosted by Supabase.
+
+Database operations are gradually being moved into service files to separate data access from the user interface.
+
+Examples include:
+
+- `petService.ts`
+- `appointmentService.ts`
+- `reminderService.ts`
+
+This approach improves code organization, reduces repeated database queries, and makes functionality easier to maintain and test.
+
+## Technologies
+
 - React Native
-- TypeScript
 - Expo Router
+- TypeScript
 - Supabase
 - PostgreSQL
+- Supabase Authentication
+- Vercel (web deployment)
+- GitHub
+
+## Local Setup
+
+### Requirements
+
+- Node.js and npm
+- A Supabase project
+- The project's environment variables
+
+### Installation
+
+Clone the repository, then navigate to the Expo application:
+
+```bash
+cd pawprint-mobile
+npm install
+```
+
+Create a `.env` file inside `pawprint-mobile`:
+
+```env
+EXPO_PUBLIC_SUPABASE_URL=your_supabase_project_url
+EXPO_PUBLIC_SUPABASE_KEY=your_supabase_publishable_key
+```
+
+Use the Supabase publishable key, not a service-role or secret key. Never put privileged database credentials in client-side environment variables.
+
+Start the application:
+
+```bash
+npx expo start
+```
+
+## Database
+
+The database uses PostgreSQL through Supabase.
+
+SQL scripts are maintained in the [`SQL`](SQL/) directory, including table definitions, database views, and sample data.
+
+See the [SQL README](SQL/README.md) for database structure, restoration instructions, and security documentation.
+
+## Deployment
+
+PawPrint has been deployed as a web application using Vercel.
+
+The deployment is currently protected while authentication and database security are being improved.
+
+The public application link will be added once the remaining security requirements are completed and tested.
+
+## Security Improvements
+
+AD371 Update #4 introduced several security changes:
+
+- Migrated the login process to Supabase Authentication.
+- Connected owner profiles to Supabase Auth user IDs.
+- Enabled Row Level Security for owners, pets, appointments, reminders, and care records.
+- Added owner-specific policies for supported database operations.
+- Configured existing database views to use invoker permissions.
+- Restricted access to legacy password and security-answer columns.
+- Created a fictional Sample User for testing.
+
+**Security work remains in progress.** The application is not yet ready for unrestricted public use.
+
+Remaining work includes migrating account registration and password recovery, removing legacy credentials, securing the remaining database tables, and testing authorization between separate accounts.
+
+## Future Development
+
+Planned improvements include:
+
+- Complete authentication and database security.
+- Reusable input validation.
+- Additional pet management features.
+- Improved error handling and testing.
+- Complete database recovery and sample-data scripts.
+- Public demonstration deployment.
+
 ---
-### Setup
-1.  **Install Dependencies**
 
-    `npm install`
-
-3. **Navigate to the pawprint-mobile directory**
-
-    `cd pawprint-mobile`
-2. **Create Environment Variables**
-
-    Create a `.env` file in the project root:
-    ```
-    EXPO_PUBLIC_SUPABASE_URL=your_supabase_project_url
-    EXPO_PUBLIC_SUPABASE_KEY=your_supabase_publishable_key
-    ```
-    The `.env` file is not committed to source control and must be created locally before running the application.
-
-3. **Start the Application**
-
-    `npx expo start`
-
----
-## Database Schema
-### Core Tables
-1. `Owners`
-stores the pet owner's information
-    - id
-    - first_name
-    - last_name
-    - email
-    - phone
-2. `pets` stores each pet profile
-    - id
-    - owner_id
-    - name
-    - species
-    - breed
-    - birth_date
-    - adoption_date
-    - weight
-3. `care_records`
-    - id
-    - pet_id
-    - care_record_type_id
-    - record_date
-    - title
-    - description
-    - provider_name
-    - next_due_date
-4. `reminders`
-    - id
-    - pet_id
-    - reminder_title
-    - reminder_type_id
-    - due_date
-    - is_completed
-5. `food_logs`
-    - id
-    - pet_id
-    - food_id
-    - bag_size
-    - start_date
-    - end_date
-    - notes
-6. `appointments`
-    - appointment_id
-    - pet_id
-    - appointment_title
-    - appointment_date
-    - provider_name
-    - location
-    - notes
-    - status
-
-### Other Tables
-1. `reminder_types` 
-    - id
-    - type_name
-2. `care_record_types`
-    - id
-    - type_name
-3. `foods` to help standardize the DB, so food could be a dropdown
-    - id
-    - food_brand
-    - food_name
-    - food_type
-    - species
-    
-
-
-#### Wireframes
-  ![High fidelity Wireframes](images/HFWF.png)
+PawPrint is an ongoing academic project that continues to evolve as new architecture, database, and application development concepts are introduced.

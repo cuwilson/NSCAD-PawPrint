@@ -1,3 +1,12 @@
+-- Supabase Auth users must be created separately.
+
+-- Remove views before dropping their underlying tables.
+DROP VIEW IF EXISTS current_pet_foods;
+DROP VIEW IF EXISTS owner_dashboard_stats;
+DROP VIEW IF EXISTS pet_medical_history;
+DROP VIEW IF EXISTS owner_pet_summary;
+DROP VIEW IF EXISTS upcoming_appointments;
+DROP VIEW IF EXISTS upcoming_reminders;
 
 DROP TABLE IF EXISTS food_logs;
 DROP TABLE IF EXISTS reminders;
@@ -9,6 +18,7 @@ DROP TABLE IF EXISTS owners;
 DROP TABLE IF EXISTS foods;
 DROP TABLE IF EXISTS reminder_types;
 DROP TABLE IF EXISTS care_record_types;
+DROP TABLE IF EXISTS security_questions;
 
 -- -----------------------------------------------------
 -- Table security_questions
@@ -21,20 +31,20 @@ CREATE TABLE security_questions (
 -- -----------------------------------------------------
 -- Table owners
 -- -----------------------------------------------------
+
+-- Owner profiles.
+-- Passwords are managed separately by Supabase Auth.
 CREATE TABLE owners (
     owner_id SERIAL PRIMARY KEY,
     first_name TEXT NOT NULL,
     last_name TEXT NOT NULL,
     email TEXT UNIQUE NOT NULL,
-    password TEXT NOT NULL,
-    security_question_id INT NOT NULL,
-    security_answer TEXT NOT NULL,
-    phone TEXT
-
-    CONSTRAINT fk_security_question
-        FOREIGN KEY (security_question_id)
-        REFERENCES security_questions(security_question_id)
+    phone TEXT,
+    auth_user_id UUID UNIQUE
+        REFERENCES auth.users(id)
+        ON DELETE SET NULL
 );
+
 
 -- -----------------------------------------------------
 -- Table pets
