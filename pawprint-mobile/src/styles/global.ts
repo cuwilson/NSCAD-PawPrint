@@ -1,13 +1,12 @@
 import { StyleSheet } from "react-native";
 import { colors } from "./colors";
-import { sizes } from "./sizes";
+import { sizes, scale } from "./sizes";
 
 
 export const globalStyles = StyleSheet.create({
   screen: {
     flex: 1,
     backgroundColor: colors.background,
-    padding: sizes.screenPadding,
   },
 
   centeredScreen: {
@@ -38,6 +37,13 @@ export const globalStyles = StyleSheet.create({
     fontSize: sizes.body,
   },
 
+  brandButton: {
+    backgroundColor: colors.brand,
+    padding: 10,
+    borderRadius: 12,
+    alignItems: "center",
+  },
+
   accentButton: {
     backgroundColor: colors.accent,
     height: sizes.buttonHeight,
@@ -51,12 +57,6 @@ export const globalStyles = StyleSheet.create({
     borderRadius: sizes.cardRadius,
     padding: sizes.screenPadding,
     gap: 14,
-  },
-
-  message: {
-    color: colors.accentContrast,
-    textAlign: "center",
-    marginTop: 12,
   },
 
   backButton: {
@@ -94,8 +94,7 @@ export const globalStyles = StyleSheet.create({
 
   smallButtonText: {
     color: colors.white,
-    fontSize: sizes.body,
-    fontWeight: "400",
+    fontWeight: "500",
   },
 
   bigButton: {
@@ -149,4 +148,64 @@ export const globalStyles = StyleSheet.create({
     left: sizes.iconOffset,
     bottom: 25,
   },
+
+  itemText: {
+    flex: 1,
+    minWidth: 0,
+  },
+
+  content: {
+    padding: sizes.screenPadding,
+  },
+
+  message: {
+    color: colors.accent,
+    textAlign: "center",
+    marginBottom: scale(16),
+  },
+
+  cardHeaderText: {
+    fontSize: sizes.menuText,
+    color: colors.accentContrast,
+    fontWeight: "700",
+  },
+
+  cardText: {
+    fontSize: sizes.body,
+    color: colors.accentContrast,
+    fontWeight: "600",
+    flexShrink: 1,
+  },
+
+  dashboardBulletRow: {
+    flexDirection: "row",
+    gap: scale(8),
+    marginBottom: scale(10),
+  },
+
+  bullet: {
+    fontSize: scale(32),
+    color: colors.accent,
+    top: -1,
+  },
+
+  dashboardItemDate: {
+    fontSize: scale(14),
+    color: colors.brand,
+    marginTop: scale(2),
+    fontWeight: "600",
+  },
+
+  deleteButton: {
+    backgroundColor: colors.accent,
+    padding: 10,
+    borderRadius: 12,
+    alignItems: "center",
+  },
+
+  deleteButtonText: {
+    color: colors.accentContrast,
+    fontWeight: "700",
+  },
+
 });
