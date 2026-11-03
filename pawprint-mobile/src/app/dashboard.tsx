@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
-import { useLocalSearchParams } from "expo-router";
+import { useLocalSearchParams, router } from "expo-router";
 import { Image, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { supabase } from "@/lib/supabase";
+import { globalStyles } from "@/styles/global";
 import { colors } from "@/styles/colors";
 import PawPrintBanner from "@/components/PawPrintBanner";
 import DashboardSection from "@/components/dashboard/DashboardSection";
@@ -18,6 +19,7 @@ import {
   getAppointmentDetails,
 } from "@/services/appointmentService";
 import { getOwnerPets } from "@/services/petService";
+
 
 type DashboardItem = {
   id: number;
@@ -193,8 +195,7 @@ export default function DashboardScreen() {
     return (
       <Pressable
         key={item.id}
-        style={styles.dashboardBulletRow}
-
+        style={globalStyles.dashboardBulletRow}
         onPress={() => {
           if (panelType === "appointmentDetails") {
             openAppointmentDetails(item);
@@ -205,23 +206,23 @@ export default function DashboardScreen() {
         }}
 
       >
-        <Text style={styles.bullet}>•</Text>
+        <Text style={globalStyles.bullet}>•</Text>
 
         <View style={styles.itemContent}>
-          <View style={styles.itemText}>
-            <Text style={styles.cardText}>{item.label}</Text>
+          <View style={globalStyles.itemText}>
+            <Text style={globalStyles.cardText}>{item.label}</Text>
 
             {item.date ? (
-              <Text style={styles.dashboardItemDate}>{item.date}</Text>
+              <Text style={globalStyles.dashboardItemDate}>{item.date}</Text>
             ) : null}
           </View>
 
           {isReminder ? (
             <Pressable
-              style={styles.completeButton}
+              style={globalStyles.completeButton}
               onPress={() => completeReminder(item.id)}
             >
-              <Text style={styles.smallButtonText}>Done</Text>
+              <Text style={globalStyles.smallButtonText}>Done</Text>
             </Pressable>
           ) : null}
         </View>
@@ -230,7 +231,7 @@ export default function DashboardScreen() {
   }
 
   return (
-    <View style={styles.screen}>
+    <View style={globalStyles.screen}>
       <PawPrintBanner
         showMenu
         ownerId={ownerIdValue}
@@ -238,9 +239,10 @@ export default function DashboardScreen() {
         onMenuPress={() => setMenuOpen((current) => !current)}
       />
 
-      <ScrollView contentContainerStyle={styles.content}>
-        <Text style={styles.title}>Welcome, {firstNameValue}</Text>
-        <Text style={styles.subtitle}>PawPrint Dashboard</Text>
+      <ScrollView contentContainerStyle={globalStyles.content}>
+        <Text style={globalStyles.title}>Welcome, {firstNameValue}</Text>
+        <Text style={globalStyles.subtitle}>PawPrint Dashboard</Text>
+
 
         {isLoading && (
           <Text style={styles.message}>
@@ -249,7 +251,7 @@ export default function DashboardScreen() {
         )}
 
 
-        {message ? <Text style={styles.message}>{message}</Text> : null}
+        {message ? <Text style={globalStyles.message}>{message}</Text> : null}
 
 
         {Boolean(message) && !isLoading && (
@@ -287,7 +289,16 @@ export default function DashboardScreen() {
             <Pressable
               key={pet.pet_id}
               style={styles.petTile}
-              onPress={() => console.log("Open pet", pet.pet_id)}
+              onPress={() =>
+                router.push({
+                  pathname: "/pet-dashboard",
+                  params: {
+                    ownerId: ownerIdValue,
+                    firstName: firstNameValue,
+                    petId: pet.pet_id,
+                  },
+                })
+              }
             >
               <View style={styles.photoContainer}>
                 <Image
@@ -320,6 +331,7 @@ export default function DashboardScreen() {
             </Pressable>
           ))}
 
+          {/* add pet tile */}
           <Pressable
             style={[styles.petTile, styles.addPetTile]}
             onPress={() => setActivePanel("pet")}
@@ -385,14 +397,14 @@ export default function DashboardScreen() {
                 style={styles.completeDetailsButton}
                 onPress={() => completeReminder(selectedItem.id)}
               >
-                <Text style={styles.smallButtonText}>Complete</Text>
+                <Text style={globalStyles.smallButtonText}>Complete</Text>
               </Pressable>
 
               <Pressable
-                style={styles.deleteButton}
+                style={globalStyles.deleteButton}
                 onPress={() => deleteReminder(selectedItem.id)}
               >
-                <Text style={styles.deleteButtonText}>Delete</Text>
+                <Text style={globalStyles.deleteButtonText}>Delete</Text>
               </Pressable>
             </View>
           </>

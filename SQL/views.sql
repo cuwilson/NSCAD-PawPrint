@@ -1,7 +1,8 @@
 -- -----------------------------------------------------
 -- Current Pet Foods
 -- -----------------------------------------------------
-CREATE VIEW current_pet_foods AS
+CREATE VIEW current_pet_foods
+WITH (security_invoker = true) AS
 SELECT
     owners.owner_id,
     pets.pet_id,
@@ -27,7 +28,8 @@ WHERE food_logs.end_date IS NULL;
 -- -----------------------------------------------------
 -- Upcoming Appointments
 -- -----------------------------------------------------
-CREATE VIEW upcoming_appointments AS
+CREATE VIEW upcoming_appointments
+WITH (security_invoker = true) AS
 SELECT
     owners.owner_id,
     appointments.appointment_id,
@@ -52,7 +54,8 @@ WHERE appointments.status = 'Scheduled';
 -- -----------------------------------------------------
 -- Pet Medical History
 -- -----------------------------------------------------
-CREATE VIEW pet_medical_history AS
+CREATE VIEW pet_medical_history
+WITH (security_invoker = true) AS
 SELECT
     owners.owner_id,
     pets.pet_id,
@@ -78,7 +81,8 @@ JOIN care_record_types
 -- -----------------------------------------------------
 -- Owner Dashboard
 -- -----------------------------------------------------
-CREATE VIEW owner_pet_summary AS
+CREATE VIEW owner_pet_summary
+WITH (security_invoker = true) AS
 SELECT
     owners.owner_id,
     owners.first_name,
@@ -98,7 +102,8 @@ JOIN pets
 -- -----------------------------------------------------
 -- Upcoming Reminders
 -- -----------------------------------------------------
-CREATE VIEW upcoming_reminders AS
+CREATE VIEW upcoming_reminders
+WITH (security_invoker = true) AS
 SELECT
     owners.owner_id,
     reminders.reminder_id,
@@ -123,7 +128,8 @@ WHERE reminders.is_completed = FALSE;
 -- -----------------------------------------------------
 -- Owner Dashboard Stats
 -- -----------------------------------------------------
-CREATE VIEW owner_dashboard_stats AS
+CREATE VIEW owner_dashboard_stats
+WITH (security_invoker = true) AS
 SELECT
     owners.owner_id,
     owners.first_name,

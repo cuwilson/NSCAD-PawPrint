@@ -11,29 +11,44 @@ export default function LoginScreen() {
     const [password, setPassword] = useState("");
     const [message, setMessage] = useState("");
 
-    async function findOwner() {
-        const { data, error } = await supabase
-            .from("owners")
-            .select("owner_id, first_name, email, password")
-            .eq("email", email.trim().toLowerCase())
-            .eq("password", password.trim())
-            .single();
 
-        if (error || !data) {
+    async function findOwner() {
+        setMessage("");
+
+        // Authenticate through Supabase Auth.
+        const { data: authData, error: authError } =
+            await supabase.auth.signInWithPassword({
+                email: email.trim().toLowerCase(),
+                password: password,
+            });
+
+        if (authError || !authData.user) {
             setMessage("Invalid email or password.");
             return;
         }
 
-        router.push({
+        // Find the PawPrint owner linked to this Auth account.
+        const { data: owner, error: ownerError } = await supabase
+            .from("owners")
+            .select("owner_id, first_name")
+            .eq("auth_user_id", authData.user.id)
+            .single();
+
+        if (ownerError || !owner) {
+            await supabase.auth.signOut();
+            setMessage("Unable to find the associated PawPrint account.");
+            return;
+        }
+
+        router.replace({
             pathname: "/dashboard",
             params: {
-                ownerId: data.owner_id,
-                firstName: data.first_name,
+                ownerId: owner.owner_id,
+                firstName: owner.first_name,
             },
         });
-
-
     }
+
 
     return (
         <View style={styles.container}>

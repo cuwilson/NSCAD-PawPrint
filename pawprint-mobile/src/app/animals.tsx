@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { useLocalSearchParams } from "expo-router";
-import {  Image, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { useLocalSearchParams, router } from "expo-router";
+import { Image, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { supabase } from "@/lib/supabase";
 import PawPrintBanner from "@/components/PawPrintBanner";
 import { colors } from "@/styles/colors";
@@ -76,10 +76,14 @@ export default function AnimalsScreen() {
               key={pet.pet_id}
               style={styles.animalTile}
               onPress={() =>
-                console.log(
-                  "Open pet dashboard",
-                  pet.pet_id
-                )
+                router.push({
+                  pathname: "/pet-dashboard",
+                  params: {
+                    ownerId: ownerIdValue,
+                    firstName: firstNameValue,
+                    petId: pet.pet_id,
+                  },
+                })
               }
             >
               <View style={styles.animalPhotoBox}>
