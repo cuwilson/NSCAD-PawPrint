@@ -6,6 +6,11 @@ import FormDropdown from "@/components/small-elements/FormDropdown";
 import { colors } from "@/styles/colors";
 import { scale } from "@/styles/sizes";
 import { createReminder } from "@/services/reminderService";
+import {
+    isRequired,
+    isValidLength,
+    isValidDate,
+} from "@/utils/validation";
 
 type ReminderFormProps = {
     ownerId: number;
@@ -69,17 +74,34 @@ export default function ReminderForm({
 
 
     async function saveReminder() {
-        if (!petId || !reminderTypeId || !title.trim()) {
-            setMessage("Please fill out all fields.");
+
+        if (
+            !petId ||
+            !reminderTypeId ||
+            !isRequired(title)
+        ) {
+            setMessage("Please fill out all required fields.");
             return;
         }
+
+        if (!isValidLength(title, 100)) {
+            setMessage("Reminder title must be 100 characters or less.");
+            return;
+        }
+
+        // Due date is optional, but must be valid if provided.
+        if (dueDate.trim() && !isValidDate(dueDate.trim())) {
+            setMessage("Please enter a valid date (YYYY-MM-DD).");
+            return;
+        }
+
 
         try {
             await createReminder({
                 petId: Number(petId),
                 reminderTypeId: Number(reminderTypeId),
                 title: title.trim(),
-                dueDate: dueDate || null,
+                dueDate: dueDate.trim() || null,
             });
 
             onSuccess();
