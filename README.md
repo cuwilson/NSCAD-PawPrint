@@ -119,21 +119,36 @@ The deployment is currently protected while authentication and database security
 
 The public application link will be added once the remaining security requirements are completed and tested.
 
-## Security Improvements
+## Authentication and Security
 
-AD371 Update #4 introduced several security changes:
+PawPrint uses Supabase Authentication to manage user registration, login, and password credentials.
 
-- Migrated the login process to Supabase Authentication.
-- Connected owner profiles to Supabase Auth user IDs.
-- Enabled Row Level Security for owners, pets, appointments, reminders, and care records.
-- Added owner-specific policies for supported database operations.
-- Configured existing database views to use invoker permissions.
-- Restricted access to legacy password and security-answer columns.
-- Created a fictional Sample User for testing.
+When a new user registers, a PostgreSQL trigger automatically creates a corresponding profile in the `owners` table. Each profile is linked to its Supabase Auth account using `auth_user_id`.
 
-**Security work remains in progress.** The application is not yet ready for unrestricted public use.
+### Database Security
 
-Remaining work includes migrating account registration and password recovery, removing legacy credentials, securing the remaining database tables, and testing authorization between separate accounts.
+- Row Level Security (RLS) restricts access to owner-specific information.
+- Database views use `security_invoker = true` to respect underlying table permissions.
+- Appointment and reminder operations use Supabase's query builder rather than constructing raw SQL statements from user input.
+- Legacy password and security-answer fields are restricted from client access.
+
+### Input Validation
+
+Shared validation functions check required fields, email formats, text lengths, dates, and times before submitting data.
+
+Appointment and reminder forms have been tested with valid, invalid, and SQL-like inputs to verify appropriate handling.
+
+### Password Recovery
+
+PawPrint uses Supabase Auth's email-based password recovery functionality instead of security questions.
+
+The recovery interface has been implemented, but the complete email recovery process still requires testing.
+
+### Security Status
+
+Security improvements are ongoing. Remaining work includes completing database permissions and RLS policies, testing email-based password recovery, removing legacy credential columns, and verifying authorization between different accounts.
+
+The Vercel deployment remains protected while this work is completed.
 
 ## Future Development
 

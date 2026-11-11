@@ -15,6 +15,7 @@ The goal is to maintain the database structure and supporting scripts in GitHub 
 | `common_joins.sql` | Example queries demonstrating relationships between tables. |
 | `security_policies.sql` | Planned script for recreating database permissions and Row Level Security policies. |
 | `sample_user.sql` | Creates the Sample User owner profile and two fictional pets after the Supabase Auth account has been created |
+| `auth_trigger.sql` | Automatically crates an owner profie when a new Supabase Auth user registers |
 
 ## Database Structure
 

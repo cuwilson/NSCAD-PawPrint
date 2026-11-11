@@ -1,17 +1,18 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Pressable, StyleSheet, Text, TextInput, ScrollView, View } from "react-native";
 import { supabase } from "@/lib/supabase";
 import { Link } from "expo-router";
 import PawPrintLogo from "@/components/small-elements/PawPrintLogo";
 import { globalStyles } from "@/styles/global";
 import { sizes } from "@/styles/sizes";
-import FormDropdown from "@/components/small-elements/FormDropdown";
 import { isValidPassword } from "@/utils/password";
+import {
+    isRequired,
+    isValidEmail,
+    isValidLength,
+} from "@/utils/validation";
 
-type SecurityQuestion = {
-    security_question_id: number;
-    question_text: string;
-};
+
 
 export default function NewUserScreen() {
     const [firstName, setFirstName] = useState("");
@@ -22,31 +23,42 @@ export default function NewUserScreen() {
     const [password, setPassword] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
 
-    const [securityQuestions, setSecurityQuestions] = useState<SecurityQuestion[]>([]);
-    const [securityQuestionId, setSecurityQuestionId] = useState<number | null>(null);
-    const [securityAnswer, setSecurityAnswer] = useState("");
 
+    
 
-    useEffect(() => {
-        async function loadSecurityQuestions() {
-            const { data, error } = await supabase
-                .from("security_questions")
-                .select("security_question_id, question_text")
-                .order("security_question_id");
-
-            if (error) {
-                setMessage(error.message);
-                return;
-            }
-
-            setSecurityQuestions(data ?? []);
-        }
-
-        loadSecurityQuestions();
-    }, []);
 
 
     async function createOwner() {
+        setMessage("");
+
+        const cleanFirstName = firstName.trim();
+        const cleanLastName = lastName.trim();
+        const cleanEmail = email.trim().toLowerCase();
+        const cleanPhone = phone.trim();
+
+        if (!isRequired(cleanFirstName) || !isRequired(cleanLastName)) {
+            setMessage("Please enter your first and last name.");
+            return;
+        }
+
+        if (
+            !isValidLength(cleanFirstName, 100) ||
+            !isValidLength(cleanLastName, 100)
+        ) {
+            setMessage("Names must be 100 characters or less.");
+            return;
+        }
+
+        if (!isValidEmail(cleanEmail)) {
+            setMessage("Please enter a valid email address.");
+            return;
+        }
+
+        if (!isValidLength(cleanPhone, 30)) {
+            setMessage("Phone number must be 30 characters or less.");
+            return;
+        }
+
         if (!isValidPassword(password)) {
             setMessage(
                 "Password must be at least 8 characters and contain a number."
@@ -59,33 +71,32 @@ export default function NewUserScreen() {
             return;
         }
 
-        if (!securityQuestionId || !securityAnswer) {
-            setMessage("Please select a security question and answer.");
-            return;
+        try {
+            const { error } = await supabase.auth.signUp({
+                email: cleanEmail,
+                password,
+                options: {
+                    data: {
+                        first_name: cleanFirstName,
+                        last_name: cleanLastName,
+                        phone: cleanPhone || null,
+                    },
+                },
+            });
+
+            if (error) {
+                setMessage("Unable to create account: " + error.message);
+                return;
+            }
+
+            setMessage(
+                "Registration submitted! Check your email for a confirmation link if required, then log in."
+            );
+        } catch (error) {
+            setMessage("Unable to create account. Please try again.");
         }
-
-        const { data, error } = await supabase
-            .from("owners")
-            .insert({
-                first_name: firstName,
-                last_name: lastName,
-                email: email,
-                phone: phone || null,
-                password: password,
-                security_question_id: securityQuestionId,
-                security_answer: securityAnswer,
-            })
-            .select()
-            .single();
-
-        if (error) {
-            setMessage(error.message);
-            return;
-        }
-
-        setMessage(`Account created for ${data.first_name}!`);
-        console.log("New owner:", data);
     }
+
 
     return (
         <ScrollView
@@ -117,27 +128,7 @@ export default function NewUserScreen() {
                 secureTextEntry
             />
 
-            <FormDropdown
-                label="Security Question"
-                selectedValue={securityQuestionId}
-                placeholder="Choose a security question"
-                options={securityQuestions.map((question) => ({
-                    label: question.question_text,
-                    value: question.security_question_id,
-                }))}
-                onValueChange={(value) =>
-                    setSecurityQuestionId(Number(value))
-                }
-            />
-
-            <TextInput
-                placeholder="Security Answer"
-                style={globalStyles.input}
-                value={securityAnswer}
-                onChangeText={setSecurityAnswer}
-                autoCapitalize="none"
-            />
-
+            
             <Pressable style={globalStyles.accentButton} onPress={createOwner}>
                 <Text style={globalStyles.accentButtonText}>Create Account</Text>
             </Pressable>

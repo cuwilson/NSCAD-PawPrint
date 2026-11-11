@@ -7,6 +7,12 @@ import { getOwnerPets } from "@/services/petService";
 import { createAppointment } from "@/services/appointmentService";
 import { colors } from "@/styles/colors";
 import { scale } from "@/styles/sizes";
+import {
+  isRequired,
+  isValidLength,
+  isValidDate,
+  isValidTime,
+} from "@/utils/validation";
 
 type AppointmentFormProps = {
   ownerId: number;
@@ -48,31 +54,37 @@ export default function AppointmentForm({
   }, [ownerId]);
 
   async function saveAppointment() {
-    if (!petId || !title.trim() || !date.trim() || !time.trim()) {
+
+    if (
+      !petId ||
+      !isRequired(title) ||
+      !isRequired(date) ||
+      !isRequired(time)
+    ) {
       setMessage("Please fill out all required fields.");
       return;
     }
 
-    // Require YYYY-MM-DD and HH:MM in 24-hour time.
-    const datePattern = /^\d{4}-\d{2}-\d{2}$/;
-    const timePattern = /^([01]\d|2[0-3]):[0-5]\d$/;
-
-    if (!datePattern.test(date) || !timePattern.test(time)) {
-      setMessage("Use YYYY-MM-DD for date and HH:MM for time.");
-      return;
-    }
-
-    const [year, month, day] = date.split("-").map(Number);
-    const parsedDate = new Date(year, month - 1, day);
-
     if (
-      parsedDate.getFullYear() !== year ||
-      parsedDate.getMonth() !== month - 1 ||
-      parsedDate.getDate() !== day
+      !isValidLength(title, 100) ||
+      !isValidLength(provider, 100) ||
+      !isValidLength(location, 200) ||
+      !isValidLength(notes, 1000)
     ) {
-      setMessage("Please enter a valid appointment date.");
+      setMessage("One or more fields are too long.");
       return;
     }
+
+    if (!isValidDate(date)) {
+      setMessage("Please enter a valid date (YYYY-MM-DD).");
+      return;
+    }
+
+    if (!isValidTime(time)) {
+      setMessage("Please enter a valid time (HH:MM).");
+      return;
+    }
+
 
     setIsSaving(true);
     setMessage("");
