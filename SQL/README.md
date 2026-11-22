@@ -13,9 +13,10 @@ The goal is to maintain the database structure and supporting scripts in GitHub 
 | `insert_data.sql` | Contains original sample data from the database coursework. Requires updating for Supabase Auth before reuse. |
 | `owner_queries.sql` | Example SQL queries for owner-related data. |
 | `common_joins.sql` | Example queries demonstrating relationships between tables. |
-| `security_policies.sql` | Planned script for recreating database permissions and Row Level Security policies. |
+| `security_policies.sql` | Configures database permissions and Row Level Security policies. |
 | `sample_user.sql` | Creates the Sample User owner profile and two fictional pets after the Supabase Auth account has been created |
 | `auth_trigger.sql` | Automatically crates an owner profie when a new Supabase Auth user registers |
+| `authorization_tests_sql` | Tests whether one authenticated user can access another owner's records |
 
 ## Database Structure
 
@@ -34,17 +35,41 @@ The database also uses several views to simplify retrieving dashboard informatio
 
 ## Authentication and Security
 
-PawPrint originally used custom authentication with passwords stored in the `owners` table.
+PawPrint uses Supabase Authentication to manage user accounts and passwords. A PostgreSQL trigger automatically creates an owner profile when a new Auth user registers.
 
-During AD371 Update #4, the login process was changed to use Supabase Auth.
+### Row Level Security
 
-- Supabase Auth manages account credentials and login sessions.
-- The `owners.auth_user_id` column connects owner profiles to authenticated users.
-- The existing numeric `owner_id` remains in use for relationships with pets.
-- Row Level Security is being implemented to restrict access to an owner's own information.
-- Database views are configured with `security_invoker = true` to respect underlying table permissions and RLS policies.
+Row Level Security (RLS) restricts access to database records based on the authenticated user's identity.
 
-**Security migration is still in progress.** Registration, password recovery, remaining table policies, and legacy credential removal must be completed before the application is ready for public access.
+The database uses the following permissions:
+
+- **Owners:** Users can read their own profile.
+- **Pets:** Users can read pets belonging to their account.
+- **Appointments:** Users can view and create appointments for their pets.
+- **Reminders:** Users can view, create, update, and delete reminders for their pets.
+- **Medical records:** Users can read medical records belonging to their pets.
+- **Food logs:** Users can read food logs belonging to their pets.
+- **Lookup tables:** Authenticated users have read-only access to shared food and care categories.
+
+Database views use `security_invoker = true` to respect the underlying table permissions and RLS policies.
+
+The policies and permissions are documented in `security_policies.sql`.
+
+### Authorization Testing
+
+Cross-account authorization tests verify that users cannot retrieve records belonging to another owner.
+
+The tests simulate a different authenticated user and attempt to access another account's pets, appointments, and reminders.
+
+All three read-access tests returned zero records, confirming that the tested RLS policies restricted access appropriately.
+
+The test queries are documented in `authorization_tests.sql`.
+
+### Remaining Security Work
+
+The security configuration is still being finalized. Remaining work includes testing unauthorized write operations, reviewing database permissions, removing legacy authentication fields, and testing the full password recovery process.
+
+The Vercel deployment remains protected while this work is completed.
 
 ## Rebuilding the Database
 
@@ -56,13 +81,15 @@ For a new or intentionally reset Supabase project:
 2. Open the Supabase SQL Editor.
 3. Run `creating_tables.sql` to create the tables and relationships.
 4. Run `views.sql` to create the database views.
-5. Apply the required grants and Row Level Security policies.
-6. Create the demonstration account through Supabase Authentication.
-7. Link the Auth account to an owner record and insert fictional sample data.
-8. Configure the application's environment variables with the new Supabase project URL and publishable key.
-9. Test login, owner-specific retrieval, appointments, and reminders.
+5. Run `security_policies.sql` to configure database permissions and Row Level Security policies.
+6. Run `auth_trigger.sql` to enable automatic owner profile creation during registration.
+7. Create the demonstration account through Supabase Authentication.
+8. Run `sample_user.sql` to link the Auth account to an owner record and insert fictional sample pets.
+9. Configure the application's environment variables with the new Supabase project URL and publishable key.
+10. Test login, owner-specific retrieval, appointments, and reminders.
+11. Run `authorization_tests.sql` to verify that users cannot retrieve another owner's records.
 
-The security policy script and updated sample data script are not yet complete, so these instructions are a recovery plan rather than a fully tested one-command restoration process.
+**Note:** This is the intended recovery process. The full setup has not yet been tested against a fresh Supabase project, and additional security verification is still needed before public deployment.
 
 ## Sample User Setup
 
